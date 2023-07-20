@@ -49,11 +49,41 @@ def driver_generate_cluster_folders(cluster_csv_path):
     generate_cluster_folders(df, new_folder_path)
 
 
+def make_cfd_no_folders():
+    '''
+    Create one folder that contains all images with no subfolders
+    '''
+    new_folder_path = "../data/cfd_images"
+    if os.path.exists(new_folder_path): 
+        shutil.rmtree(new_folder_path)    
+    os.mkdir(new_folder_path)
+
+    i = 0
+    for folder in os.listdir(DATA_PATH):
+        images = os.listdir(os.path.join(DATA_PATH, folder))
+        image_path = None   
+        if len(images) > 1:
+            for image_file in images:
+                if Path(image_file).stem[-1] == "N":
+                    image_path = os.path.join(DATA_PATH, folder, image_file) 
+            if image_path is None:
+                print(f"Folder {folder} contains no neutral image")
+        elif len(images) == 0:
+            print(f"Folder {folder} contains no images")
+        else:
+            image_path = os.path.join(DATA_PATH, folder, images[0])
+        
+        if image_path is not None:
+            new_path = os.path.join(new_folder_path, f'{i}_{Path(image_path).stem}.png')
+            shutil.copy(image_path, new_path)
+        i += 1
+    return 
 
 
 
 if __name__ == "__main__":
-    driver_generate_cluster_folders("../files/KMEANS_k=100_facenet512_CFD_embeddings.csv")
+    make_cfd_no_folders()
+    #driver_generate_cluster_folders("../files/KMEANS_k=100_facenet512_CFD_embeddings.csv")
         
             
 
