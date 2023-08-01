@@ -3,6 +3,7 @@ import os
 import pandas as pd 
 from pathlib import Path
 from tqdm import tqdm
+import numpy as np 
 
 class CFDEmbeddingGenerator:
     def __init__(self, model="Facenet512"):
@@ -10,7 +11,7 @@ class CFDEmbeddingGenerator:
 
     def get_embedding(self, file_path):
         embedding_objs = DeepFace.represent(img_path = file_path, model_name = self.model)
-        embedding = embedding_objs[0]["embedding"]
+        embedding = np.array(embedding_objs[0]["embedding"])
         return embedding 
     
     def get_embedding_table(self, data_dir="../data/cfd"):
@@ -53,7 +54,7 @@ class GeneralEmbeddingGenerator:
 
     def get_embedding(self, file_path):
         embedding_objs = DeepFace.represent(img_path = file_path, model_name = self.model)
-        embedding = embedding_objs[0]["embedding"]
+        embedding = np.array(embedding_objs[0]["embedding"])
         return embedding 
     
     def get_embedding_table(self, data_dir="../data/test"):
@@ -78,6 +79,6 @@ class GeneralEmbeddingGenerator:
 if __name__ == "__main__":
     CFDGen = CFDEmbeddingGenerator()
     embedding_table = CFDGen.get_embedding_table()
-    embedding_table.to_csv("../embeddings/Facenet512_CFD_embeddings.csv")
-
+    #embedding_table.to_csv("../embeddings/Facenet512_CFD_embeddings.csv")
+    embedding_table.to_pickle("../embeddings/Facenet512_CFD_embeddings.pkl")
 

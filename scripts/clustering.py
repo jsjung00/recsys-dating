@@ -49,13 +49,21 @@ class Clusterer:
         '''
         Generate clusters and save the cluster label and file name df to csv
         '''
-        embedding_data = pd.read_csv(self.embedding_path)
-        embeddings = embedding_data['imageEmbedding'].values
-        embeddings = np.array([json.loads(embedding) for embedding in embeddings])
+        if Path(self.embedding_path).suffix == ".csv":
+            embedding_df = pd.read_csv(self.embedding_path)
+            embeddings = embedding_df['embeddings'].values
+            embeddings = np.array([json.loads(embedding) for embedding in embeddings]) 
+        elif Path(self.embedding_path).suffix == ".pkl":
+            embedding_df = pd.read_pickle(self.embedding_path)
+            embeddings = embedding_df['embeddings'].to_numpy()
+            embeddings = np.stack(embeddings)
+            print(f'Embeddings shape {embeddings.shape}')
+        else:
+            print(f"File {self.embedding_path} is not of form csv or pkl")
         #normalize data 
         X = StandardScaler().fit_transform(embeddings)
         cluster_labels = self.generate_clusters_from_data(X, num_clusters=num_clusters)
-        image_names = embedding_data['imageName'].values
+        image_names = embedding_df['image_names'].values
         
         #save a dict where key is the cluster label and value is list of indices
         #corresponding to that cluster
@@ -94,7 +102,7 @@ class Clusterer:
 
 
 if __name__ == "__main__":
-    ClusterGen = Clusterer(cluster_type="KMEANS", embedding_path="../embeddings/facenet512_CFD_embeddings.csv")
+    ClusterGen = Clusterer(cluster_type="KMEANS", embedding_path="../embeddings/female_5000_5-5_nonan.pkl")
     ClusterGen.save_clusters(num_clusters=100)
     #ClusterGen.save_tsne(perplexity=5)
     #ClusterGen.save_tsne(perplexity=10)

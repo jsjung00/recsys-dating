@@ -1,6 +1,7 @@
 from get_embedding import GeneralEmbeddingGenerator
 from affinity import return_similarity_vector
 import os 
+import pandas as pd 
 
 def run_test_suite():
     if not os.path.exists("../embeddings/facenet512_test_embeddings.csv"):
@@ -14,4 +15,5 @@ def run_test_suite():
     
 
 if __name__ == "__main__":
-    run_test_suite()
+    #run_test_suite()
+  
