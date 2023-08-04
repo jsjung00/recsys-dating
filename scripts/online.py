@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd 
 from datasets import load_dataset, load_from_disk 
 import cv2
+import matplotlib.pyplot as plt 
+import math 
 
 class Cluster: 
     def __init__(self, image_idxs):
@@ -45,13 +47,14 @@ class OnlineEngine:
     '''
     Note: all indices in the clusters represent the hugging face indices, i.e index i corresponds to hf_dataset[i]
     '''
-    def __init__(self, likesThreshold, clusters_file, dataset_dir="../data/tmdb-people-image", numRounds=30):
+    def __init__(self, likesThreshold, clusters_file, sim_matrix_file, dataset_idxs_file, dataset_dir="../data/tmdb-people-image", numRounds=30):
+        self.likesThreshold = likesThreshold
         self.clusters_file = clusters_file
+        self.sim_matrix_file = sim_matrix_file
         self.clusters = []
         self.numClusters = None 
-        self.hf_dataset_image_idxs = None 
+        self.hf_dataset_image_idxs = np.load(dataset_idxs_file).tolist() #arr[i] means that the i idxed vector in embedding matrix has hf_dataset index arr[i]
         self.generate_clusters()
-        self.likesThreshold = likesThreshold
         self.numRounds = numRounds 
         self.curRound = 1
         self.dataset = load_from_disk(dataset_dir)
@@ -65,8 +68,7 @@ class OnlineEngine:
         cluster_labels = clusters_df.iloc[:,0]
         image_names = clusters_df.iloc[:,1]
         hugging_indices = [int(name.split("_")[-1]) for name in image_names]
-        self.hf_dataset_image_idxs = hugging_indices
-        cluster_index_groups = {} #key is cluster number, values is hugging face indices
+        cluster_index_groups = {} #key is cluster number, values is hugging face dataset indices (i.e hf_dataset[i])
         for i in range(0, len(cluster_labels)):
             if cluster_labels[i] in cluster_index_groups:
                 cluster_index_groups[cluster_labels[i]].append(hugging_indices[i])
@@ -85,19 +87,20 @@ class OnlineEngine:
         else:
             for i in range(0, len(self.clusters)):
                 cluster = self.clusters[i]
-                print(f'Cluster {i}, round {self.curRound}  \n')
+                #print(f'Cluster {i}, round {self.curRound}  \n')
                 cluster.print_stats()
-                print(f'UCB score is {cluster.getUCBScore(self.curRound)}')
+                #print(f'UCB score is {cluster.getUCBScore(self.curRound)}')
 
             cluster_ucb_values = [cluster.getUCBScore(self.curRound) for cluster in self.clusters]
             max_idx = np.argmax(cluster_ucb_values)
             return self.clusters[max_idx].get_random_image_idx(), max_idx
 
     def round_driver(self):
+        print("Round called")
         #display image 
         dataset_img_idx, cluster_idx = self.draw_arm()
-        print(f'Image index {dataset_img_idx} and cluster index {cluster_idx}')
-        print(f'Image index type {type(dataset_img_idx)}')
+        #print(f'Image index {dataset_img_idx} and cluster index {cluster_idx}')
+        #print(f'Image index type {type(dataset_img_idx)}')
         profile = self.dataset[dataset_img_idx]
         cv2.imshow("Current Profile Picture", np.array(profile['image'])[...,::-1])
         cv2.waitKey(0)
@@ -107,28 +110,46 @@ class OnlineEngine:
         if rating: self.totalLikes += 1
         self.clusters[cluster_idx].update_values(rating, dataset_img_idx)
         self.curRound += 1
-        print(f"Current round {self.curRound}")
+        #print(f"Current round {self.curRound}")
 
     def game_run(self):
         print("Welcome to Find Your Type")
         #for _ in range(self.numRounds):
         #    self.round_driver()
-        while (self.totalLikes < self.likesThreshold and self.curRound > self.numRounds):
+        while (self.totalLikes < self.likesThreshold or self.curRound <= self.numRounds):
             self.round_driver()
-        
-        #generate_type()
-
+        print("Finished rounds. Returning type...")
+        type_image_indices = self.generate_type()
+        self.display_image(type_image_indices)
+ 
     def generate_type(self):
-        liked_idxs = []
+        liked_idxs = [] #idxs correspond to hf_datset indices, i.e profile = hf_dataset[i]
         disliked_idxs = []
         for cluster in self.clusters:
             liked_idxs.extend(cluster.likedIdxs)
-
-        #called after using inputs ratings
-        imageGraph = ImageGraph()
-
+            disliked_idxs.extend(cluster.dislikedIdxs)
         
-        pass  
+        #called after using inputs ratings
+        imageGraph = ImageGraph(liked_idxs, disliked_idxs, self.hf_dataset_image_idxs, self.sim_matrix_file)
+        CLUSTER_SIZE = 5
+        SIM_THRESHOLD = 0.75
+        #top_cluster is set of hugging face dataset indices 
+        top_cluster = imageGraph.get_top_rated_cluster(CLUSTER_SIZE, SIM_THRESHOLD)
+        return top_cluster 
+    
+    def display_image(self, dataset_indices):
+        fig = plt.figure(figsize=(8,10))
+        cols = math.ceil(len(dataset_indices)/2)
+        rows = 2 
+        for i in range(0, len(dataset_indices)):
+            fig.add_subplot(rows, cols, i+1)
+            profile = self.dataset[dataset_indices[i]]
+            plt.imshow(np.array(profile['image']))
+            plt.axis('off')
+            plt.title(f"Example {i+1}")
+        plt.show()
+        return 
+
 
 
 class ImageGraph:
@@ -142,29 +163,55 @@ class ImageGraph:
         self.generateValues()
 
     def generateValues(self):
-        #populates imageValues list which contains tuples of (image_index, image_value)
-        #liked images have val 1, disliked value 0, and unrated are a weighted combination of rated where weight is image similarity
-        #NOTE: order of the image indices should match the order of the similarity matrix
+        '''
+        populates imageValues list which contains tuples of (image_index, image_value)
+        the value of each image is a weighted combination of values of rated points where weight is image similarity
+        and the other liked images have +1 value and other disliked images have 0 value 
+        NOTE: order of the image indices should match the order of the similarity matrix
+        '''
         sim_matrix = np.load(self.sim_matrix_file)
         assert len(sim_matrix) == len(self.hf_dataset_idxs)
         self.sim_matrix = sim_matrix
 
         for i in range(0, len(self.hf_dataset_idxs)):
-            image_idx = self.hf_dataset_idxs[i]
-            if image_idx in self.likedIdxs:
-                self.imageValues.append((image_idx, 1))
-            elif image_idx in self.dislikedIdxs:
-                self.imageValues.append((image_idx, 0))
-            else:
-                weightedVal = 0
-                for liked_image_idx in self.likedIdxs:
-                    embedding_idx = self.hf_dataset_idxs.index(liked_image_idx)
-                    similarity_val = sim_matrix[i][embedding_idx]
-                    weightedVal += similarity_val*1
-                self.imageValues.append((image_idx, weightedVal))
+            dataset_image_idx = self.hf_dataset_idxs[i]
+            weightedVal = 0
+            for liked_image_idx in self.likedIdxs:
+                embedding_idx = self.hf_dataset_idxs.index(liked_image_idx)
+                similarity_val = sim_matrix[i][embedding_idx]
+                weightedVal += similarity_val*1
+            self.imageValues.append((dataset_image_idx, weightedVal))
 
     def get_top_rated_cluster(self, cluster_size, sim_threshold):
         '''
+        Finds the maximal value point and greedily generates a cluster of points closest to it
+        If it is not possible to generate a cluster around the maximal point such that the sim is larger than threshold, 
+        it uses the second largest value point and so on  
+        '''
+        sorted_image_vals = sorted(self.imageValues, key=lambda x: x[1], reverse=True)
+        #try to build cluster around highest point and find next best if not 
+        for i in range(0, len(sorted_image_vals)):
+            center_point = sorted_image_vals[i]
+            center_emb_index = self.hf_dataset_idxs.index(center_point[0])
+            cluster_embedding_indices = []
+            #get most sim indices in descending order
+            sorted_sim_point_indices = np.argsort(-1*self.sim_matrix[center_emb_index])
+            assert sorted_sim_point_indices[0] == center_emb_index
+            for j in range(0, cluster_size):
+                other_idx = sorted_sim_point_indices[j]
+                if self.sim_matrix[center_emb_index][other_idx] > sim_threshold:
+                    cluster_embedding_indices.append(other_idx)
+                else:
+                    break 
+            if len(cluster_embedding_indices) == cluster_size:
+                cluster_dataset_idxs = [self.hf_dataset_idxs[embed_idx] for embed_idx in cluster_embedding_indices]
+                return cluster_dataset_idxs
+        return 
+    
+    
+    def _get_top_rated_cluster(self, cluster_size, sim_threshold):
+        '''
+        NON-OPTIMIZED, NP hard, exponential
         Returns cluster (list of indices that corresponds to embedding matrix)
         '''
         lst_subset_vals = [] #contains tuples of (cluster_sum_val, cluster_indices)
@@ -200,6 +247,9 @@ class ImageGraph:
         return cluster_hf_dataset_indices
 
 
+    
+
+
 
 
 
@@ -211,36 +261,11 @@ class ImageGraph:
 
     
 
-
-
-
-#Deprecated: including inside OnlineEngine 
-class UCBEnv(OnlineEngine):
-    def __init__(self, numRounds, clusters_file):
-        super().__init__(numRounds, clusters_file)
-
-    def draw_arm(self):
-        #returns an image index to display and cluster index
-        print(f"UCB current round {self.curRound}")
-        for cluster in self.clusters:
-            cluster.print_stats()
-
-        if self.curRound <= self.numClusters:
-            #draw from cluster i
-            cluster = self.clusters[self.curRound - 1]
-            image_idx = cluster.get_random_image_idx()
-            return image_idx, self.curRound - 1
-        else:
-            cluster_ucb_values = [cluster.getUCBScore(self.curRound) for cluster in self.clusters]
-            max_idx = np.argmax(cluster_ucb_values)
-            return self.clusters[max_idx].get_random_image_idx(), max_idx
-    def increment_round(self):
-        self.curRound += 1
-        
         
 
 if __name__ == "__main__":
-    game = OnlineEngine(5, "../files/KMEANS_k=10_female_5000_5-5_nonan.csv")
+    game = OnlineEngine(5, "../files/KMEANS_k=10_female_5000_5-5_nonan.csv", "../files/simMatrix_female_5000_5-5_nonan.npy",
+                         "../files/hf_dataset_idxs_female_5000_5-5_nonan.npy", numRounds=30)
     game.game_run()
     
     
