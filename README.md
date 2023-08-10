@@ -32,6 +32,15 @@ To have the value function in line with this intuition, given a set of rated ima
 Here we generate a category of $n=6$ images. One might posit that the optimization problem is maximizing the sum of values in a n-size subset such that the pairwise similarity of each vector in the subset is larger than some threshold $T$. This can be equivalently expressed as a maximum weighted clique problem, which is NP Hard.
 However, an approximate solution can be determined in a computationally efficient manner: points close to the maximal value image, due to the spatial construction of the value function, should also have a very high value. Thus, to determine a cluster of high sum value, it is enough to build a cluster of points around a high value point (either the maximum or the next largest value embeddings).
 
+## Demonstrations
+Here is an example of the algorithm in practice. 
+For an example theme of *Cosmopolitan Korea*, here are the user liked and disliked images and the generated category recommendation.
 
+
+[<img src="./misc/k_cosmopolitan_liked.png" width="400"/>](./misc/k_cosmopolitan_liked.png)
+
+[<img src="./misc/k_cosmopolitan_disliked.png" width="600"/>](./misc/k_cosmopolitan_disliked.png)
+
+[<img src="./misc/k_cosmopolitan_category.png" width="400"/>](./misc/k_cosmopolitan_category.png)
 
 
