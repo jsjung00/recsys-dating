@@ -35,6 +35,7 @@ However, an approximate solution can be determined in a computationally efficien
 ## Demonstrations
 Here is an example of the algorithm in practice. 
 For an example theme of *Wolverine Superhero*, here are the user liked, user disliked, and the generated category recommendation images.
+
 [<img src="./misc/man_liked.png" width="400"/>](./misc/man_liked.png)
 
 [<img src="./misc/man_disliked.png" width="600"/>](./misc/man_disliked.png)
