@@ -34,8 +34,15 @@ However, an approximate solution can be determined in a computationally efficien
 
 ## Demonstrations
 Here is an example of the algorithm in practice. 
-For an example theme of *Cosmopolitan Korea*, here are the user liked and disliked images and the generated category recommendation.
+For an example theme of *Wolverine Superhero*, here are the user liked, user disliked, and the generated category recommendation images.
+[<img src="./misc/k_cosmopolitan_liked.png" width="400"/>](./misc/man_liked.png)
 
+[<img src="./misc/k_cosmopolitan_disliked.png" width="600"/>](./misc/man_disliked.png)
+
+[<img src="./misc/k_cosmopolitan_category.png" width="400"/>](./misc/man_rec.png)
+
+
+For an example theme of *Cosmopolitan Korea*, here are the user liked and disliked images and the generated category recommendation.
 
 [<img src="./misc/k_cosmopolitan_liked.png" width="400"/>](./misc/k_cosmopolitan_liked.png)
 
