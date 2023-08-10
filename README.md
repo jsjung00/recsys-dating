@@ -1,7 +1,7 @@
 # Content Based E-Dating Recommender System 
 
 ## Motivation 
-Tinder wrote about their matching algorithm TinVec in 2017, which required access to a dataset of swipes across users to generate profile embeddings. 
+This project was inspired by Tinder's matching algorithm TinVec (MLConf 2017), which required access to a dataset of swipes across users to generate profile embeddings. 
 This motivated the following question: *without this data assumption, how would one recommend a profile while dealing with the cold-start problem?* 
 This project utilizes solely image profile information (where images are embedded into a vector space) to recommend a cluster of people (i.e a certain category) to the user. 
 To effectively explore and get feedback from the user, it uses unsupervised clustering (k-means) to generate broad strokes categories and then utilizes UCB to determine which categories would be more beneficial to get feedback from the user from both an exploration and exploitiation perspective.   
@@ -34,4 +34,13 @@ However, an approximate solution can be determined in a computationally efficien
 
 ## Demonstrations
 Here is an example of the algorithm in practice. 
+For an example theme of *Cosmopolitan Korea*, here are the user liked and disliked images and the generated category recommendation.
+
+
+[<img src="./misc/k_cosmopolitan_liked.png" width="400"/>](./misc/k_cosmopolitan_liked.png)
+
+[<img src="./misc/k_cosmopolitan_disliked.png" width="600"/>](./misc/k_cosmopolitan_disliked.png)
+
+[<img src="./misc/k_cosmopolitan_category.png" width="400"/>](./misc/k_cosmopolitan_category.png)
+
 
