@@ -120,35 +120,42 @@ class OnlineEngine:
             self.round_driver()
         print("Finished rounds. Returning type...")
         type_image_indices = self.generate_type()
-        self.display_image(type_image_indices)
- 
-    def generate_type(self):
+        liked_idxs, disliked_idxs = self.ret_liked_disliked_idxs()
+        self.display_image(type_image_indices, "Recommended Category")
+        self.display_image(liked_idxs, "Liked Images", num_rows=1)
+        self.display_image(disliked_idxs, "Disliked Images", num_rows=3)
+
+
+
+    def ret_liked_disliked_idxs(self):
         liked_idxs = [] #idxs correspond to hf_datset indices, i.e profile = hf_dataset[i]
         disliked_idxs = []
         for cluster in self.clusters:
             liked_idxs.extend(cluster.likedIdxs)
             disliked_idxs.extend(cluster.dislikedIdxs)
-        
+        return liked_idxs, disliked_idxs
+ 
+    def generate_type(self, cluster_size=6):
+        liked_idxs, disliked_idxs = self.ret_liked_disliked_idxs()
         #called after using inputs ratings
         imageGraph = ImageGraph(liked_idxs, disliked_idxs, self.hf_dataset_image_idxs, self.sim_matrix_file)
-        CLUSTER_SIZE = 5
         SIM_THRESHOLD = 0.75
         #top_cluster is set of hugging face dataset indices 
-        top_cluster = imageGraph.get_top_rated_cluster(CLUSTER_SIZE, SIM_THRESHOLD)
+        top_cluster = imageGraph.get_top_rated_cluster(cluster_size, SIM_THRESHOLD)
         return top_cluster 
     
-    def display_image(self, dataset_indices):
-        fig = plt.figure(figsize=(8,10))
-        cols = math.ceil(len(dataset_indices)/2)
-        rows = 2 
+    def display_image(self, dataset_indices, title = "", num_rows=2):
+        cols = math.ceil(len(dataset_indices)/num_rows)
+        fig = plt.figure(figsize=(num_rows * 5, cols*3))
+        if title: fig.suptitle(title)
         for i in range(0, len(dataset_indices)):
-            fig.add_subplot(rows, cols, i+1)
+            fig.add_subplot(num_rows, cols, i+1)
             profile = self.dataset[dataset_indices[i]]
             plt.imshow(np.array(profile['image']))
             plt.axis('off')
-            plt.title(f"Example {i+1}")
+            #plt.title(f"Example {i+1}")
         plt.show()
-        return 
+        return
 
 
 
@@ -255,17 +262,9 @@ class ImageGraph:
 
 
 
-
-    
-
-
-    
-
-        
-
 if __name__ == "__main__":
-    game = OnlineEngine(5, "../files/KMEANS_k=10_female_5000_5-5_nonan.csv", "../files/simMatrix_female_5000_5-5_nonan.npy",
-                         "../files/hf_dataset_idxs_female_5000_5-5_nonan.npy", numRounds=30)
+    game = OnlineEngine(5, "../files/KMEANS_k=10_male_5000_5-5_nonan.csv", "../files/simMatrix_male_5000_5-5_nonan.npy",
+                         "../files/hf_dataset_idxs_male_5000_5-5_nonan.npy", numRounds=30)
     game.game_run()
     
     

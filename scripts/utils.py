@@ -5,7 +5,9 @@ import shutil
 from pathlib import Path
 import pandas as pd 
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
-from online import ImageGraph
+import pickle 
+#from firebase_functions import https_fn, firestore_fn
+#from firebase_admin import initialize_app, firestore, credentials
 DATA_PATH = "../data/cfd"
 FOLDER_SAVE_PATH = "../clusters"
 
@@ -55,6 +57,7 @@ def generate_cluster_folders(df, cluster_folder_path, data="hugging"):
     return 
 
 def driver_generate_cluster_folders(cluster_csv_path):
+    
     df = pd.read_csv(cluster_csv_path)
     #create a folder to save the cluster subfolders
     new_folder_path = os.path.join(FOLDER_SAVE_PATH, f"{Path(cluster_csv_path).stem}")
@@ -204,23 +207,74 @@ def test_get_clusters():
     sim_threshold = 0.5
     print(f'Answer should be [(, [0,2])] {get_top_rated_cluster(cluster_size, 0.71, generateValues, test_sim_matrix)}')
 
+def save_id_url_map():    
+    celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
+    
+    df1 = pd.read_pickle("../embeddings/male_5000_5-5_nonan.pkl")
+    image_names1 = df1['image_names'].to_numpy()
+    hf_dataset_idxs1 = np.array([int(name.split("_")[-1]) for name in image_names1])
+    df2 = pd.read_pickle("../embeddings/female_5000_5-5_nonan.pkl")
+    image_names2 = df2['image_names'].to_numpy()
+    hf_dataset_idxs2 = np.array([int(name.split("_")[-1]) for name in image_names2])
+
+    
+    id_url_map = {}
+    for i in range(0, len(hf_dataset_idxs1)):
+        idx = int(hf_dataset_idxs1[i])
+        tmdbID = str(celeb_faces[idx]['id'])
+        prof_path = f"https://image.tmdb.org/t/p/original/{celeb_faces[idx]['profile_path']}"
+        id_url_map[tmdbID] = prof_path
+    
+    for i in range(0, len(hf_dataset_idxs2)):
+        idx = int(hf_dataset_idxs2[i])
+        tmdbID = str(celeb_faces[idx]['id'])
+        prof_path = f"https://image.tmdb.org/t/p/original/{celeb_faces[idx]['profile_path']}"
+        id_url_map[tmdbID] = prof_path
+
+    with open('../files/tmdb_id_url_map.pkl', 'wb') as fp:
+        pickle.dump(id_url_map, fp)
+    return 
+
+'''
+def upload_id_url_firebase():
+    cred = credentials.Certificate("../app/NO-UPLOAD/account_file.json")
+    app = initialize_app(cred)
+    db = firestore.client()
+    id_url_map = pickle.load(open("../files/tmdb_id_url_map.pkl", "rb"))
+    db.collection("misc").document('tmdbIDToURL').set(id_url_map)
+'''
+
+def change_files_to_tmbdID(clusters_file, new_file_name):
+    celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
+    clusters_df = pd.read_csv(clusters_file, index_col=0)
+    image_names = clusters_df.iloc[:,1]
+    hugging_indices = [int(name.split("_")[-1]) for name in image_names]
+    tmdb_ids = [str(celeb_faces[h_idx]['id']) for h_idx in hugging_indices]
+    clusters_df.iloc[:,1] = tmdb_ids
+    print(clusters_df.head())
+    clusters_df.to_csv(new_file_name)
+    return 
+
+
 
 if __name__ == "__main__":
     #make_cfd_no_folders()
-    #driver_generate_cluster_folders("../files/KMEANS_k=100_female_5000_5-5_nonan.csv")
+    #driver_generate_cluster_folders("../files/KMEANS_k=10_male_5000_5-5_nonan.csv")
     #remove_nan('../embeddings/female_5000_5-5.pkl')
     #df = pd.read_csv("../files/KMEANS_k=10_female_5000_5-5_nonan.csv", index_col=0)
     #print(df.head())
     #print(df.iloc[:,1].values)
     #save_hf_disk()
-
-
-    #save_sim_matrix("../embeddings/female_5000_5-5_nonan.pkl")
-    save_hf_dataset_idxs("../embeddings/female_5000_5-5_nonan.pkl")
+    #save_sim_matrix("../embeddings/male_5000_5-5_nonan.pkl")
+    #save_hf_dataset_idxs("../embeddings/male_5000_5-5_nonan.pkl")
     #test_get_clusters()
-    #df = pd.read_pickle('../embeddings/female_5000_5-5_nonan.pkl')
-    #print(df.head())
+    #save_id_url_map()
+    #upload_id_url_firebase()
+    #change_files_to_tmbdID('../files/KMEANS_k=10_female_5000_5-5_nonan.csv', '../files/TMDBID_KMEANS_k=10_female_5000_5-5_nonan.csv')
 
+
+    
+    
      
      
         

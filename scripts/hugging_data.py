@@ -43,7 +43,7 @@ def get_valid_indices(array_size=5000):
         
 
 
-def generate_embeddings(array_size=5000, get_female=True, get_male=False):
+def generate_embeddings(array_size=5000, get_female=False, get_male=True):
     def get_embedding(idx):
         profile = celeb_faces[idx]
         name, image = profile['name'], np.array(profile['image'])
@@ -73,6 +73,17 @@ def generate_embeddings(array_size=5000, get_female=True, get_male=False):
             female_embedding_df = pd.DataFrame({'image_names': female_image_names, 'embeddings':female_embeddings})
             female_embedding_df.to_pickle(f'../embeddings/female_{array_size}_{i+1}-5.pkl')
 
+    if get_male:
+        for i in range(4,5):
+            partition_size = math.ceil(len(male_idxs)/5)
+            idx_partition = male_idxs[i*partition_size: (i+1)*partition_size]
+            partition_objects = map(get_embedding, tqdm(idx_partition))
+            partition_embeddings, partition_names = list(zip(*partition_objects))
+            male_embeddings.extend(partition_embeddings)
+            male_image_names.extend(partition_names)
+            male_embedding_df = pd.DataFrame({'image_names': male_image_names, 'embeddings': male_embeddings})
+            male_embedding_df.to_pickle(f'../embeddings/male_{array_size}_{i+1}-5_only.pkl')
+
     return 
 
 
@@ -93,4 +104,4 @@ def generate_embeddings(array_size=5000, get_female=True, get_male=False):
 if __name__ == "__main__":
     print("Starting script")
     #female_idxs, male_idxs = get_valid_indices(10)
-    print(generate_embeddings(array_size=5000))
+    print(generate_embeddings(array_size=5000, get_male=True))
