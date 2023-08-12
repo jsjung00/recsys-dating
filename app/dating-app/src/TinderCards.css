@@ -1,0 +1,49 @@
+.card {
+  position: relative;
+  width: 600px;
+  padding: 20px;
+  max-width: 85vm;
+  height: 50vh;
+  border-radius: 20px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0px 18px 53px 0px rgba(0, 0, 0, 0.3);
+}
+
+.tinderCards__cardContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 5vh;
+}
+
+.swipe {
+  position: absolute;
+}
+
+.swipeButtons {
+  position: fixed;
+  bottom: 10vh;
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.swipeButtons .MuiIconButton-root {
+  background-color: white;
+  box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3) !important;
+}
+
+.swipeButtons__repeat {
+  padding: 3vw !important;
+  color: orange !important;
+}
+
+.swipeButtons__close {
+  padding: 3vw !important;
+  color: red !important;
+}
+
+.swipeButtons__favorite {
+  padding: 3vw !important;
+  color: lightgreen !important;
+}
