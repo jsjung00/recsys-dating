@@ -11,13 +11,11 @@ import IconButton from "@mui/material/IconButton";
 
 export default function TinderCards(props) {
   const { people, setPeople, afterFeedback } = props;
-  console.log("people", people);
   const canSwipe = people.length > 0;
 
   const swiped = (direction) => {
     //card to be deleted is the last element in people array
     const last_person = people[people.length - 1];
-    console.log("last person", last_person);
     afterFeedback(
       direction === "right",
       last_person.id,
