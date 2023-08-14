@@ -51,11 +51,23 @@ def get_top_rated_cluster(imageValues, sim_matrix, sim_ids, cluster_size, sim_th
 
 @functions_framework.http
 def matrix_read(request):
+    # Set CORS headers for the preflight request
+    if request.method == "OPTIONS":
+        headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Max-Age": "3600",
+        }
+        return ("", 204, headers)
+
+    # Set CORS headers for the main request
+    headers = {"Access-Control-Allow-Origin": "*"}
     request_json = request.get_json() 
     if 'bucket' not in request_json or 'sim_file' not in request_json or \
     'sim_id_file' not in request_json or 'liked_ids' not in request_json or \
     'disliked_ids' not in request_json or 'cluster_size' not in request_json or 'sim_threshold' not in request_json:
-        return ("Missing parameters", 400)
+        return ("Missing parameters", 400, headers)
     
     bucket_name = request_json['bucket']
     sim_matrix_file = request_json['sim_file']
@@ -75,8 +87,8 @@ def matrix_read(request):
 
     imageValues = generateValues(sim_matrix, sim_ids, liked_ids)
     rec_ids = get_top_rated_cluster(imageValues, sim_matrix, sim_ids, cluster_size, sim_threshold) 
-    return(f"{','.join(map(str, rec_ids))}", 200)
-    
+    return(f"{','.join(map(str, rec_ids))}", 200, headers)
+
 
 
 
