@@ -1,30 +1,33 @@
-# Deploy with `firebase deploy`
-import pandas as pd 
-from pathlib import Path 
-from firebase_functions import https_fn, firestore_fn
-from firebase_admin import initialize_app, firestore, credentials
+from firebase_functions import firestore_fn, https_fn, options 
+
+# The Firebase Admin SDK to access Cloud Firestore.
+from firebase_admin import initialize_app, firestore
+import google.cloud.firestore
+
+app = initialize_app()
+
+@https_fn.on_request(
+    cors=options.CorsOptions(cors_origins="*", cors_methods=["get", "post"])
+)
+def getdocID(req):
+    """Take the id parameter passed to this HTTP endpoint, get rating info from document, upload the recommendedIDs as a field"""
+    # Grab the text parameter.
+    docID = req.args.get("id")
+    if docID is None:
+        return https_fn.Response("No id parameter provided", status=400)
+
+    firestore_client = firestore.client()
+
+    doc_ref = firestore_client.collection("users-ratings").document(docID)
+    doc_snapshot = doc_ref.get()
+
+    if doc_snapshot.exists:
+        rating_object = doc_snapshot.to_dict()
+        likedIDs = rating_object['likedIDs']
+        dislikedIDs = rating_object['dislikedIDs']
+        
 
 
-def upload_clusters_file(clusters_file):
-    clusters_df = pd.read_csv(clusters_file, index_col=0)
-    doc_name = Path(clusters_file).stem 
-    cluster_labels = clusters_df.iloc[:,0]
-    tmdb_IDs = clusters_df.iloc[:,1]
-    cluster_index_groups = {} #key is cluster number, values is TMDB_ID
-    for i in range(0, len(cluster_labels)):
-        if str(cluster_labels[i]) in cluster_index_groups:
-            cluster_index_groups[str(cluster_labels[i])].append(int(tmdb_IDs[i]))
-        else:
-            cluster_index_groups[str(cluster_labels[i])] = [int(tmdb_IDs[i])]
-
-    db.collection("clusters").document(doc_name).set(cluster_index_groups)
-    return 
-
-if __name__ == "__main__":
-
-    cred = credentials.Certificate("../../NO-UPLOAD/account_file.json")
-    app = initialize_app(cred)
-    
-    db = firestore.client()
-    upload_clusters_file("../../../files/TMDBID_KMEANS_k=10_female_5000_5-5_nonan.csv")
-    upload_clusters_file("../../../files/TMDBID_KMEANS_k=10_male_5000_5-5_nonan.csv")
+        return https_fn.Response(f"\n\n Liked IDs: {likedIDs}, Disliked IDs: {dislikedIDs}")
+    else:
+        return https_fn.Response("Document not found", status=404)
