@@ -1,11 +1,13 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
 import { ObjectContext } from "../context";
 import TinderCards from "../TinderCards";
+
 import database from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { GENDER, MIN_ROUNDS, MIN_LIKES } from "../variables";
 import { redirect, useNavigate } from "react-router-dom";
-//TODO (JJ): get gender from the user selection
+import { useLocation } from "react-router-dom";
+import { Container } from "@mui/material";
 //TODO: change tinder card to regular MUI card
 
 class Cluster {
@@ -62,16 +64,19 @@ export default function Rating() {
   const [dislikedIDs, setDislikedIDs] = useState([]);
   const [roundNumber, setRoundNumber] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { gender } = location.state;
 
   async function initClusters() {
-    console.log("called initClusters");
     let doc_name;
-    if (GENDER === "FEMALE") {
+    if (gender === "woman") {
       doc_name = "TMDBID_KMEANS_k=10_female_5000_5-5_nonan";
-    } else if (GENDER === "MALE") {
+    } else if (gender === "man") {
       doc_name = "TMDBID_KMEANS_k=10_male_5000_5-5_nonan";
+    } else if (gender == "both") {
+      doc_name = "TMDBID_KMEANS_k=20_both_5000_5-5_nonan";
     } else {
-      //pass
+      console.error("Received incorrect gender option");
     }
     const cluster_doc = doc(database, "clusters", doc_name);
     const cluster_snap = await getDoc(cluster_doc);
@@ -103,7 +108,12 @@ export default function Rating() {
     return initStack;
   }
 
-  function afterFeedback(rating, imageID, clusterIdx) {
+  async function afterFeedback(rating, imageID, clusterIdx) {
+    function timeout(delay) {
+      return new Promise((res) => setTimeout(res, delay));
+    }
+    await timeout(1000);
+
     //rating (bool)
     clusters[clusterIdx].update_values(rating, imageID);
     if (rating === true) {
@@ -132,7 +142,7 @@ export default function Rating() {
     if (roundNumber > MIN_ROUNDS && totalLikes > MIN_LIKES) {
       //finish rating phase, move to results display
       navigate("/results", {
-        state: { likedIds: likedIDs, dislikedIds: dislikedIDs },
+        state: { likedIds: likedIDs, dislikedIds: dislikedIDs, gender: gender },
       });
     }
     if (roundNumber < clusters.length) {
@@ -174,16 +184,12 @@ export default function Rating() {
   }, [urlMap]);
 
   return (
-    <>
-      {imageIDURL.length > 0 ? (
-        <TinderCards
-          people={imageIDURL}
-          setPeople={setImageIDURL}
-          afterFeedback={afterFeedback}
-        />
-      ) : (
-        <p>Loading (TODO: Add loading component)</p>
-      )}
-    </>
+    <div style={{ height: "100vh", width: "100vw" }}>
+      <TinderCards
+        people={imageIDURL}
+        setPeople={setImageIDURL}
+        afterFeedback={afterFeedback}
+      />
+    </div>
   );
 }
