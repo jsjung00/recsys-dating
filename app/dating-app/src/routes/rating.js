@@ -109,11 +109,6 @@ export default function Rating() {
   }
 
   async function afterFeedback(rating, imageID, clusterIdx) {
-    function timeout(delay) {
-      return new Promise((res) => setTimeout(res, delay));
-    }
-    await timeout(1000);
-
     //rating (bool)
     clusters[clusterIdx].update_values(rating, imageID);
     if (rating === true) {
