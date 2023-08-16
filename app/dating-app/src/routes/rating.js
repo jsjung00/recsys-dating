@@ -1,10 +1,11 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
 import { ObjectContext } from "../context";
 import TinderCards from "../TinderCards";
+import ProgressCard from "../ProgressCard";
 
 import database from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { GENDER, MIN_ROUNDS, MIN_LIKES } from "../variables";
+import { MIN_ROUNDS, MIN_LIKES } from "../variables";
 import { redirect, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { Container } from "@mui/material";
@@ -27,16 +28,17 @@ class Cluster {
 
   getRandomImageId() {
     const seen_images = new Set([...this.likedIds, ...this.dislikedIds]);
-    let ret_image = null;
-    while (ret_image === null) {
-      const random_id = Math.floor(Math.random() * this.image_ids.length);
+    let ret_id = null;
+    while (ret_id === null) {
+      const random_idx = Math.floor(Math.random() * this.image_ids.length);
+      const random_id = this.image_ids[random_idx];
       if (seen_images.has(random_id)) {
         continue;
       } else {
-        ret_image = this.image_ids[random_id];
+        ret_id = random_id;
       }
     }
-    return ret_image;
+    return ret_id;
   }
 
   update_values(rating, image_id) {
@@ -62,7 +64,7 @@ export default function Rating() {
   const [totalLikes, setTotalLikes] = useState(0);
   const [likedIDs, setLikedIDs] = useState([]);
   const [dislikedIDs, setDislikedIDs] = useState([]);
-  const [roundNumber, setRoundNumber] = useState(0);
+  const [roundNumber, setRoundNumber] = useState(1);
   const navigate = useNavigate();
   const location = useLocation();
   const { gender } = location.state;
@@ -127,7 +129,7 @@ export default function Rating() {
   }
 
   useEffect(() => {
-    if (roundNumber > 0) {
+    if (roundNumber > 1) {
       ExecuteRound();
     }
   }, [roundNumber, totalLikes, likedIDs, dislikedIDs]); //called after roundNumber updates
@@ -140,7 +142,7 @@ export default function Rating() {
         state: { likedIds: likedIDs, dislikedIds: dislikedIDs, gender: gender },
       });
     }
-    if (roundNumber < clusters.length) {
+    if (roundNumber <= clusters.length) {
       //pass since initial stack contains one from each cluster
     } else {
       //draw from UCB max cluster
@@ -162,7 +164,7 @@ export default function Rating() {
         ...imageIDURL,
         { id: imageID, url: urlMap[imageID], cluster_idx: cluster_idx },
       ]);
-      console.log("Added new object");
+      console.log("Added new object with ID", imageID);
     }
   }
 
@@ -179,12 +181,26 @@ export default function Rating() {
   }, [urlMap]);
 
   return (
-    <div style={{ height: "100vh", width: "100vw" }}>
+    <div style={{ height: "100vh", width: "100vw", position: "relative" }}>
       <TinderCards
         people={imageIDURL}
         setPeople={setImageIDURL}
         afterFeedback={afterFeedback}
       />
+      <div
+        style={{
+          position: "absolute",
+          top: "4vh",
+          right: "2vw",
+          display: "inline-block",
+        }}
+      >
+        <ProgressCard
+          style={{ height: "auto", width: "auto" }}
+          roundNumber={roundNumber}
+          likes={totalLikes}
+        />
+      </div>
     </div>
   );
 }
