@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd 
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 import pickle 
+from os.path import join, getsize 
 #from firebase_functions import https_fn, firestore_fn
 #from firebase_admin import initialize_app, firestore, credentials
 DATA_PATH = "../data/cfd"
@@ -235,14 +236,6 @@ def save_id_url_map():
         pickle.dump(id_url_map, fp)
     return 
 
-'''
-def upload_id_url_firebase():
-    cred = credentials.Certificate("../app/NO-UPLOAD/account_file.json")
-    app = initialize_app(cred)
-    db = firestore.client()
-    id_url_map = pickle.load(open("../files/tmdb_id_url_map.pkl", "rb"))
-    db.collection("misc").document('tmdbIDToURL').set(id_url_map)
-'''
 
 def change_files_to_tmbdID(clusters_file, new_file_name):
     celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
@@ -255,6 +248,75 @@ def change_files_to_tmbdID(clusters_file, new_file_name):
     clusters_df.to_csv(new_file_name)
     return 
 
+def get_similarity_dict():
+    #return a dictonary where the key is a tuple (a,b) where a < b and they are the ID's of the images being compared  
+    male_df = pd.read_pickle('../embeddings/male_5000_5-5_nonan.pkl')
+    female_df = pd.read_pickle('../embeddings/female_5000_5-5_nonan.pkl')
+    both_df = pd.concat([male_df, female_df])
+    print(both_df.head())
+    celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
+    image_names = both_df['image_names']
+    hugging_indices = [int(name.split("_")[-1]) for name in image_names]
+    tmdb_ids = [str(celeb_faces[h_idx]['id']) for h_idx in hugging_indices]
+    embeddings = both_df['embeddings'].to_numpy()
+    embedding_matrix = np.stack(embeddings)
+    similarity_matrix = cosine_similarity(embedding_matrix)
+    save_path = f"../files/simMatrix_both_5000_nonan.npy"
+    np.save(save_path, similarity_matrix)
+
+    sim_dict = {} 
+    for i in range(0, len(tmdb_ids)-1):
+        for j in range(i+1, len(tmdb_ids)):
+            sim_val = similarity_matrix[i][j]
+            image_1, image_2 = tmdb_ids[i], tmdb_ids[j] 
+            new_key = tuple(sorted([image_1, image_2]))
+            sim_dict[new_key] = sim_val 
+    print(f'{len(sim_dict)}, {len(tmdb_ids)*(len(tmdb_ids)-1)/2}')
+    
+    with open('../files/id_sim_map.pkl', 'wb') as fp:
+        pickle.dump(sim_dict, fp)
+    assert len(sim_dict) == len(tmdb_ids)*(len(tmdb_ids)-1)/2 
+
+    return 
+
+def get_similarity_indices():
+    #save the tmdb_id's in an array, such that A[i] is the ID corresponding
+    #to the ith row of the simiarity matrix
+    male_df = pd.read_pickle('../embeddings/male_5000_5-5_nonan.pkl')
+    female_df = pd.read_pickle('../embeddings/female_5000_5-5_nonan.pkl')
+    both_df = pd.concat([male_df, female_df])
+    celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
+    image_names = both_df['image_names']
+    hugging_indices = [int(name.split("_")[-1]) for name in image_names]
+    tmdb_ids = np.array([str(celeb_faces[h_idx]['id']) for h_idx in hugging_indices])
+    tmdb_ids = tmdb_ids.astype("int32")
+    print(tmdb_ids.dtype)
+    save_path = f"../files/tmdb_ids_both_5000_nonan.npy"
+    np.save(save_path, tmdb_ids)
+
+def get_sim_indices(embedding_df_file, save_path):
+    df = pd.read_pickle(embedding_df_file) 
+    celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
+    image_names = df['image_names']
+    hugging_indices = [int(name.split("_")[-1]) for name in image_names]
+    tmdb_ids = np.array([str(celeb_faces[h_idx]['id']) for h_idx in hugging_indices])
+    tmdb_ids = tmdb_ids.astype("int32")
+    print(tmdb_ids[:5])
+    np.save(save_path, tmdb_ids)
+
+
+
+    
+
+            
+
+
+
+
+    
+
+    
+
 
 
 if __name__ == "__main__":
@@ -262,20 +324,26 @@ if __name__ == "__main__":
     #driver_generate_cluster_folders("../files/KMEANS_k=10_male_5000_5-5_nonan.csv")
     #remove_nan('../embeddings/female_5000_5-5.pkl')
     #df = pd.read_csv("../files/KMEANS_k=10_female_5000_5-5_nonan.csv", index_col=0)
-    #print(df.head())
-    #print(df.iloc[:,1].values)
     #save_hf_disk()
     #save_sim_matrix("../embeddings/male_5000_5-5_nonan.pkl")
     #save_hf_dataset_idxs("../embeddings/male_5000_5-5_nonan.pkl")
     #test_get_clusters()
     #save_id_url_map()
     #upload_id_url_firebase()
-    #change_files_to_tmbdID('../files/KMEANS_k=10_female_5000_5-5_nonan.csv', '../files/TMDBID_KMEANS_k=10_female_5000_5-5_nonan.csv')
-
+    #get_similarity_dict()
+    #get_similarity_indices()
+    #get_sim_indices('../embeddings/male_5000_5-5_nonan.pkl', f"../files/tmdb_ids_male_5000_nonan.npy")
+    #change_files_to_tmbdID('../files/KMEANS_k=20_both_5000_5-5_nonan.csv', '../files/TMDBID_KMEANS_k=20_both_5000_5-5_nonan.csv')
 
     
-    
-     
+
+    os.chdir("../app/dating-app")
+    path, dirs, files = next(os.walk("./")) 
+    for dir in dirs:
+        if "build" in dir:
+            print(os.path.abspath(dir))
+            shutil.rmtree(os.path.abspath(dir))
+        
      
         
             

@@ -102,8 +102,8 @@ class Clusterer:
 
 
 if __name__ == "__main__":
-    ClusterGen = Clusterer(cluster_type="KMEANS", embedding_path="../embeddings/male_5000_5-5_nonan.pkl")
-    ClusterGen.save_clusters(num_clusters=10)
+    ClusterGen = Clusterer(cluster_type="KMEANS", embedding_path='../embeddings/both_5000_5-5_nonan.pkl')
+    ClusterGen.save_clusters(num_clusters=20)
     #ClusterGen.save_tsne(perplexity=5)
     #ClusterGen.save_tsne(perplexity=10)
     #ClusterGen.save_tsne(perplexity=20)
