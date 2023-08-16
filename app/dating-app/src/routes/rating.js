@@ -190,8 +190,8 @@ export default function Rating() {
       <div
         style={{
           position: "absolute",
-          top: "4vh",
-          right: "2vw",
+          top: "3vh",
+          right: "1vw",
           display: "inline-block",
         }}
       >
