@@ -295,6 +295,7 @@ def get_similarity_indices():
     np.save(save_path, tmdb_ids)
 
 def get_sim_indices(embedding_df_file, save_path):
+    #saves an array where the ID A[i] corresponds to the ith row in embedding matrix
     df = pd.read_pickle(embedding_df_file) 
     celeb_faces = load_dataset("ashraq/tmdb-people-image", split='train')
     image_names = df['image_names']
@@ -304,18 +305,14 @@ def get_sim_indices(embedding_df_file, save_path):
     print(tmdb_ids[:5])
     np.save(save_path, tmdb_ids)
 
-
-
-    
-
-            
-
-
-
-
-    
-
-    
+def save_embedding_matrix(embedding_df_file):
+    df = pd.read_pickle(embedding_df_file) 
+    embeddings = df['embeddings'].to_numpy()
+    embedding_matrix = np.stack(embeddings)
+    save_name = f'../embeddings/emb_matrix_{Path(embedding_df_file).stem}.npy'
+    np.save(save_name, embedding_matrix)
+    print(f"Saved at {save_name}")
+    return 
 
 
 
@@ -334,15 +331,9 @@ if __name__ == "__main__":
     #get_similarity_indices()
     #get_sim_indices('../embeddings/male_5000_5-5_nonan.pkl', f"../files/tmdb_ids_male_5000_nonan.npy")
     #change_files_to_tmbdID('../files/KMEANS_k=20_both_5000_5-5_nonan.csv', '../files/TMDBID_KMEANS_k=20_both_5000_5-5_nonan.csv')
-
+    #save_embedding_matrix('../embeddings/male_5000_5-5_nonan.pkl')
+   
     
-
-    os.chdir("../app/dating-app")
-    path, dirs, files = next(os.walk("./")) 
-    for dir in dirs:
-        if "build" in dir:
-            print(os.path.abspath(dir))
-            shutil.rmtree(os.path.abspath(dir))
         
      
         
