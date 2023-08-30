@@ -63,7 +63,8 @@ Here we consider a benchmark of 100 synthethic users generated using the determi
 [<img src="./misc/cum_likes_10cluster_benchmark.png" width="500"/>](./misc/cum_likes_10cluster_benchmark.png)
 [<img src="./misc/avg_sim_10cluster_benchmark.png" width="500"/>](./misc/avg_sim_10cluster_benchmark.png)
 
-
+### Real User Data
+The app collects anonymized user rating data. With a large enough user data collection, we can generalize the user's select ratings to the all items. In particular we can assign the ratings of non-rated points as $Bernoulli(p(x))$ where $x$ is the cosine similarity to the nearest rated point and $p(x)$ is defined earlier.
 
 
 ## Demonstrations
