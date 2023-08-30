@@ -41,6 +41,7 @@ In order to create benchmark data, we utilize the following synthetic data gener
 Each user profile has $c$ number of liked clusters, where $c$ is drawn from a probability distribution. For example, a user with one "ideal" category would be represented by $c=1$. 
 Then, the method randomly samples $c$ items to generate $c$ "centers". The rating of all points are distributed as $Bernoulli(p(x))$ where $x$ is the cosine similarity to the nearest center and $p(x)$
 is a piecewise linear function. 
+[<img src="./misc/piecewise_latek.png" width="500"/>](./misc/piecewise_latek.png)
   
 #### Deterministic Clusters 
 Each user profile has $c$ number of liked clusters, where $c$ is drawn from a probability distribution.
@@ -50,9 +51,9 @@ Then, the uses k-means to partition the data into $k$ blocks. Then, $c$ blocks a
 #### Epsilon Greedy 
 We consider the classic epsilon greedy algorithm. $\epsilon$ percent of times a random image is chosen and $1-\epsilon$ times the image closest to a previously liked image is chosen. 
 
-### MaxSim
+#### MaxSim
 MaxSim solves a dual objective optimization where diversity of recommended images is directly part of the objective function. In particular the algorithm picks the image 
-$$ \argmax_x val(x) - \gamma maxSim(x)$$ 
+$ \argmax_x val(x) - \gamma maxSim(x)$ 
 where $x$ is an item and $maxSim(x)$ is the max cosine similarity to any previously rated image. 
 
 #### Experiments
