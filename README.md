@@ -42,7 +42,7 @@ Each user profile has $c$ number of liked clusters, where $c$ is drawn from a pr
 Then, the method randomly samples $c$ items to generate $c$ "centers". The rating of all points are distributed as $Bernoulli(p(x))$ where $x$ is the cosine similarity to the nearest center and $p(x)$
 is a piecewise linear function. 
 
-[<img src="./misc/piecewise_latek.png" width="500"/>](./misc/piecewise_latek.png)
+[<img src="./misc/piece_latek.png" width="500"/>](./misc/piecewise_latek.png)
   
 #### Deterministic Clusters 
 Each user profile has $c$ number of liked clusters, where $c$ is drawn from a probability distribution.
