@@ -53,9 +53,9 @@ Then, the uses k-means to partition the data into $k$ blocks. Then, $c$ blocks a
 We consider the classic epsilon greedy algorithm. $\epsilon$ percent of times a random image is chosen and $1-\epsilon$ times the image closest to a previously liked image is chosen. 
 
 #### MaxSim
-MaxSim solves a dual objective optimization where diversity of recommended images is directly part of the objective function. In particular the algorithm picks the image 
-$ \argmax_x val(x) - \gamma maxSim(x)$ 
-where $x$ is an item and $maxSim(x)$ is the max cosine similarity to any previously rated image. 
+MaxSim solves a dual objective optimization where diversity of recommended images is directly part of the objective function. In particular the algorithm picks the item 
+$\max_x \: val(x) - \gamma MSim(x)$ 
+where $x$ is an item and $MSim(x)$ is the max cosine similarity to any previously rated image. 
 
 #### Experiments
 Here we consider a benchmark of 100 synthethic users generated using the determinstic cluster method, where the number of clusters is one $c=1$. The benchmark has $k=10$ blocks as the partition size.
