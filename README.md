@@ -54,7 +54,7 @@ We consider the classic epsilon greedy algorithm. $\epsilon$ percent of times a 
 
 #### MaxSim
 MaxSim solves a dual objective optimization where diversity of recommended images is directly part of the objective function. In particular the algorithm picks the item 
-$\max_x \: val(x) - \gamma MSim(x)$ 
+$\max_x   val(x) - \gamma MSim(x)$ 
 where $x$ is an item and $MSim(x)$ is the max cosine similarity to any previously rated image. 
 
 #### Experiments
