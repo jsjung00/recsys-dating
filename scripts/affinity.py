@@ -129,8 +129,3 @@ if __name__ == "__main__":
     #print("Finished saving k closest")
      
     
-    #vec = return_similarity_vector(args.index, "../embeddings/facenet512_CFD_embeddings.csv", "euclidean")
-    #enum_vec = sorted(enumerate(vec), key=lambda x: x[1], reverse=True)
-    #if args.indices:
-    #    similarity_between_indices(args.index, args.indices,"../embeddings/facenet512_test_embeddings.csv", metric="euclidean")
-

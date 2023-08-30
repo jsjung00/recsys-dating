@@ -6,9 +6,8 @@ from pathlib import Path
 import pandas as pd 
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 import pickle 
-from os.path import join, getsize 
-#from firebase_functions import https_fn, firestore_fn
-#from firebase_admin import initialize_app, firestore, credentials
+import json 
+import matplotlib.pyplot as plt
 DATA_PATH = "../data/cfd"
 FOLDER_SAVE_PATH = "../clusters"
 
@@ -135,6 +134,13 @@ def save_hf_dataset_idxs(embeddings_file):
     save_path = f"../files/hf_dataset_idxs_{Path(embeddings_file).stem}.npy"
     np.save(save_path, hf_dataset_idxs)
 
+def save_tmdbid_to_rowidx(embeddings_file):
+    df = pd.read_pickle(embeddings_file)
+    image_names = df['image_names'].to_numpy()
+    tmdb_ids = np.array([int(name.split("_")[-1]) for name in image_names])
+    save_path = f"../files/tmdbid_to_rowidx_{Path(embeddings_file).stem}.npy"
+    np.save(save_path, tmdb_ids)
+
 
 
 def test_get_clusters():
@@ -196,11 +202,6 @@ def test_get_clusters():
             if len(cluster_embedding_indices) == cluster_size:
                 return cluster_embedding_indices
         return 
-    '''
-    1  0.5   0.9
-    0.5  1  0.7  
-    0.9  0.7  1 
-    '''
 
     test_sim_matrix = np.array([[1,0.5,0.9], [0.5,1,0.7], [0.9, 0.7, 1]])
     generateValues = [(0, 7), (1, 8), (2, 2)]
@@ -314,6 +315,28 @@ def save_embedding_matrix(embedding_df_file):
     print(f"Saved at {save_name}")
     return 
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+def upload_medoids(medoids_file):
+    arr = np.load(medoids_file) 
+    #arr = np.round(arr, decimals=5)
+    json_dump = json.dumps({'medoids_arr': arr}, 
+                       cls=NumpyEncoder)
+    with open(f"../files/{Path(medoids_file).stem}.json", "w") as outfile:
+        outfile.write(json_dump)
+    return   
+
+
+def get_sim_stats(sim_matrix_file):
+    sim_matrix = np.load(sim_matrix_file)
+    plt.hist(np.ravel(sim_matrix))
+    plt.show()
+
+
 
 
 if __name__ == "__main__":
@@ -331,12 +354,17 @@ if __name__ == "__main__":
     #get_similarity_indices()
     #get_sim_indices('../embeddings/male_5000_5-5_nonan.pkl', f"../files/tmdb_ids_male_5000_nonan.npy")
     #change_files_to_tmbdID('../files/KMEANS_k=20_both_5000_5-5_nonan.csv', '../files/TMDBID_KMEANS_k=20_both_5000_5-5_nonan.csv')
+    #change_files_to_tmbdID('../files/KMEDOIDS_k=50_both_5000_5-5_nonan.csv', '../files/TMDBID_KMEDOIDS_k=50_both_5000_5-5_nonan.csv')
+    #change_files_to_tmbdID('../files/KMEDOIDS_k=50_male_5000_5-5_nonan.csv', '../files/TMDBID_KMEDOIDS_k=50_male_5000_5-5_nonan.csv')
+    #change_files_to_tmbdID('../files/KMEDOIDS_k=50_female_5000_5-5_nonan.csv', '../files/TMDBID_KMEDOIDS_k=50_female_5000_5-5_nonan.csv')
     #save_embedding_matrix('../embeddings/male_5000_5-5_nonan.pkl')
-   
+    #upload_medoids("../files/KMEDOIDS_centers_k=50_both_5000_5-5_nonan.npy")
+    get_sim_stats("../files/simMatrix_female_5000_5-5_nonan.npy")
+
+
     
-        
-     
-        
+
+
             
 
 
