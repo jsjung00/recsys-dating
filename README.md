@@ -41,6 +41,7 @@ In order to create benchmark data, we utilize the following synthetic data gener
 Each user profile has $c$ number of liked clusters, where $c$ is drawn from a probability distribution. For example, a user with one "ideal" category would be represented by $c=1$. 
 Then, the method randomly samples $c$ items to generate $c$ "centers". The rating of all points are distributed as $Bernoulli(p(x))$ where $x$ is the cosine similarity to the nearest center and $p(x)$
 is a piecewise linear function. 
+
 [<img src="./misc/piecewise_latek.png" width="500"/>](./misc/piecewise_latek.png)
   
 #### Deterministic Clusters 
