@@ -9,7 +9,7 @@ To effectively explore and get feedback from the user, it uses unsupervised clus
 To generate the suggested category, it uses the rated subset of embeddings to construct a rating for all embeddings and then returns a clique of similar images that best represent the user's preferences.  
 
 ### Dataset
-The profile images come from the TMDB, the Movie Database, which contain profile pictures of various actors and celebrities. The current dataset is little less than 5000 images of actors in the age range 20-40. 
+The profile images come from the TMDB, the Movie Database, which contain profile pictures of various actors and celebrities. The current dataset is little less than 10000 images of actors in the age range 20-40. 
 
 ## Method
 
